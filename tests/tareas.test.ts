@@ -8,32 +8,31 @@ import app from "../src/app";
 
 // describe nos ayuda a agrupar pruebas relacionadas
 // En este caso, todas las pruebas que verifiquen la ruta GET /tareas
-describe("GET /tareas", () => {
-  // it define una prueba individual
-  // El texto describe lo que esperamos que haga nuestra API
-  it("Debe responder con un arreglo de tareas", async () => {
-    // Hacemos una petición GET a /tareas usando supertest
-    // Es como si un navegador visitara http://localhost:3000/tareas
-    const response = await request(app).get("/tareas");
+describe("POST /tareas", () => {
+  it("Debe crear una tarea cuando se envía título y descripción", async () => {
+    const nuevaTarea = {
+      titulo: "Aprender mocks",
+      descripcion: "Estudiar mocks y stubs en Jest"
+    };
 
-    // Verificamos que la respuesta sea correcta:
-    // 1. El código de estado debe ser 200 (todo salió bien)
-    expect(response.status).toBe(200);
-    
-    // 2. La respuesta debe ser un arreglo
-    expect(Array.isArray(response.body)).toBe(true);
-    
-    // 3. El arreglo debe tener al menos una tarea
-    expect(response.body.length).toBeGreaterThan(0);
-    
-    // 4. La primera tarea debe tener una propiedad 'titulo'
-    expect(response.body[0]).toHaveProperty("titulo");
-    
-    // 5. La primera tarea debe tener una propiedad 'completada'
-    expect(response.body[0]).toHaveProperty("completada");
-    // 6. La primera tarea debe tener una propiedad 'descripcion'
-    // Esta propiedad no existe, y por lo tanto la prueba fallará
-    expect(response.body[0]).toHaveProperty("descripcion");
-    
+    const response = await request(app).post("/tareas").send(nuevaTarea);
+
+    expect(response.status).toBe(201);
+    expect(response.body).toHaveProperty("id");
+    expect(response.body.titulo).toBe(nuevaTarea.titulo);
+    expect(response.body.descripcion).toBe(nuevaTarea.descripcion);
+    expect(response.body.completada).toBe(false);
+  });
+
+  it("Debe responder con 400 si falta algún campo obligatorio", async () => {
+    const tareaInvalida = {
+      titulo: "Tarea sin descripción"
+    };
+
+    const response = await request(app).post("/tareas").send(tareaInvalida);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty("mensaje");
+    expect(response.body.mensaje).toMatch(/obligatorios/i);
   });
 });
